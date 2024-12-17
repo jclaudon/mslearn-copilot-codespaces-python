@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+import hashlib
 
 current_dir = dirname(abspath(__file__))
 static_path = join(current_dir, "static")
@@ -27,7 +28,8 @@ def root():
 @app.post('/generate')
 def generate(body: Body):
     """
-    Generate a pseudo-random token ID of twenty characters by default. Example POST request body:
+    Generate a pseudo-random token ID of twenty characters by default. 
+    Example POST request body:
 
     {
         "length": 20
@@ -35,3 +37,24 @@ def generate(body: Body):
     """
     string = base64.b64encode(os.urandom(64))[:body.length].decode('utf-8')
     return {'token': string}
+
+
+# Add a Pydantic model
+class Text(BaseModel):
+    text: str
+
+
+# Create a FastAPI endpoint that accepts a POST request with a JSON body
+# containing a single field called "text" and returns a checksum of the text
+@app.post('/checksum')
+def checksum(text: Text):
+    """
+    Generate a checksum for the given text.
+    Example POST request body:
+
+    {
+        "text": "example text"
+    }
+    """
+    checksum_value = hashlib.md5(text.text.encode('utf-8')).hexdigest()
+    return {'checksum': checksum_value}
